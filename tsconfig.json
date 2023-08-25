@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+      "allowJs": false,
+      "moduleResolution": "node",
+      "target": "ES5",
+      "jsx": "react",
+      "baseUrl": "./",
+      "esModuleInterop": true,
+      "noImplicitAny": true,
+      "allowSyntheticDefaultImports": true,
+      "strict": true,
+      "resolveJsonModule": true,
+      "forceConsistentCasingInFileNames": true,
+      "paths": {
+          "*": ["src/*"],          
+      }
+  },
+  "include": ["src/**/*.tsx", "src/**/*.ts", "src/graphics/vector.js"],
+  "exclude": ["node_modules"]
+}
