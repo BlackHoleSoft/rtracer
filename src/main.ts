@@ -5,25 +5,26 @@ import {colorToHex, hexToColor} from 'graphics/utils';
 import v from 'vec3';
 
 function requestExport(renderer: Renderer, ctx: CanvasRenderingContext2D) {
-    requestAnimationFrame(() => {
+    setTimeout(() => {
         renderer.exportToCanvas(ctx);
         requestExport(renderer, ctx);
-    });
+    }, 2000);
 }
 
 export function start() {
     console.log('Start');
 
-    const {canvas, ctx} = createCanvas(600, 400);
+    const {canvas, ctx} = createCanvas(400, 300);
     if (!ctx) return;
 
     fillBackground(canvas, ctx, '#333');
 
     const scene = new Scene();
     const renderer = new Renderer(canvas.width, canvas.height, scene);
+    scene.camera.direction = v(1, 0.5, 4).normalize();
 
-    scene.entities.push(new Sphere(v(0, 0, 5), 1));
-    scene.entities.push(new Sphere(v(0.6, -0.3, 4.3), 0.6, hexToColor('#f58')));
+    scene.entities.push(new Sphere(v(0, 0, 3.5), 1));
+    scene.entities.push(new Sphere(v(0.6, -0.3, 2.2), 0.6, hexToColor('#f58')));
 
     // scene.entities.push(new Sphere(v(3, 1, 4), 1.0, hexToColor('#f86')));
     // scene.entities.push(new Sphere(v(3, 1, 5), 1.0, hexToColor('#8f6')));

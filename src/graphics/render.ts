@@ -2,7 +2,7 @@ import v, {Vec3} from 'vec3';
 import {Color, ShapeType, SphereShape, Transform, VoxelEntity, VoxelShape} from './primitives';
 import {applySphereShadow, colorToHex, darkenColor, hexToColor} from './utils';
 
-const RAY_MAX_LENGTH = 10;
+const RAY_MAX_LENGTH = 5;
 const RAY_STEP_BASE = 0.01;
 
 export class Renderer {
@@ -75,6 +75,7 @@ export class Scene {
 
     constructor() {
         this.camera = new Camera();
+        this.camera.direction = v(0, 0, 1);
     }
 }
 
@@ -106,6 +107,7 @@ export class Ray {
         const x = screenX / screenWidth - 0.5;
         const y = screenY / screenHeight - 0.5;
         const rayVector = v(x * fov, y * fov * (screenHeight / screenWidth), 1);
+        // TODO: need to use matrix or quaternion
         const dir = cameraDirection.add(rayVector).normalize();
         this.direction = dir;
     }
@@ -123,31 +125,41 @@ export class Ray {
             const dist = this.stepPosition.distanceTo(val.position) - (val.shape?.size || 0) / 2;
             return dist < acc ? dist : acc;
         }, RAY_MAX_LENGTH);
-        const stepSize = minDistToEntity > RAY_STEP_BASE * 10 ? minDistToEntity / 2 : RAY_STEP_BASE;
+        const stepSize = minDistToEntity > RAY_STEP_BASE * 10 ? minDistToEntity : RAY_STEP_BASE;
 
         this.stepPosition = this.stepPosition.add(this.direction.scaled(stepSize));
 
-        entities.forEach(en => {
-            const distToCenter = this.stepPosition.distanceTo(en.position);
-            if (en.shape && en.shape.type === ShapeType.sphere) {
-                if (distToCenter <= (en.shape as SphereShape).radius) {
-                    this.alive = false;
-                    this.color = en.shape.color;
-
-                    // shadow
-                    this.color = applySphereShadow(this.color, sunDirection, en.position, this.stepPosition, ambient);
-                }
-            } else if (en.shape && en.shape.type === ShapeType.voxel) {
-                const vShape = en.shape as VoxelShape;
-                const voxels = en as VoxelEntity;
-                if (distToCenter <= (vShape.size / 2) * 1.4) {
-                    const vox = voxels.getClosestVoxel(this.stepPosition);
-                    if (vox) {
+        entities
+            .filter(f => f.shape)
+            .forEach(en => {
+                const distToCenter = this.stepPosition.distanceTo(en.position);
+                if (en.shape && en.shape.type === ShapeType.sphere) {
+                    if (distToCenter <= (en.shape as SphereShape).radius) {
                         this.alive = false;
-                        this.color = vox.color;
+                        this.color = en.shape.color;
+
+                        // shadow
+                        this.color = applySphereShadow(
+                            this.color,
+                            sunDirection,
+                            en.position,
+                            this.stepPosition,
+                            ambient,
+                        );
+                    }
+                } else if (en.shape && en.shape.type === ShapeType.voxel) {
+                    const vShape = en.shape as VoxelShape;
+                    const voxels = en as VoxelEntity;
+                    if (distToCenter <= (vShape.size / 2) * 1.4) {
+                        const vox = voxels.getClosestVoxel(this.stepPosition);
+                        if (vox) {
+                            this.alive = false;
+                            this.color = vox.color;
+                        }
                     }
                 }
-            }
-        });
+            });
+
+        this.color = darkenColor(this.color, (this.stepPosition.distanceTo(this.position) / RAY_MAX_LENGTH) * 0.5);
     }
 }
