@@ -125,7 +125,7 @@ export class Ray {
             const dist = this.stepPosition.distanceTo(val.position) - (val.shape?.size || 0) / 2;
             return dist < acc ? dist : acc;
         }, RAY_MAX_LENGTH);
-        const stepSize = minDistToEntity > RAY_STEP_BASE * 10 ? minDistToEntity : RAY_STEP_BASE;
+        const stepSize = minDistToEntity > RAY_STEP_BASE * 2 ? minDistToEntity : RAY_STEP_BASE;
 
         this.stepPosition = this.stepPosition.add(this.direction.scaled(stepSize));
 

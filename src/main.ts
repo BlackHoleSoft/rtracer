@@ -14,7 +14,7 @@ function requestExport(renderer: Renderer, ctx: CanvasRenderingContext2D) {
 export function start() {
     console.log('Start');
 
-    const {canvas, ctx} = createCanvas(400, 300);
+    const {canvas, ctx} = createCanvas(300, 200);
     if (!ctx) return;
 
     fillBackground(canvas, ctx, '#333');
