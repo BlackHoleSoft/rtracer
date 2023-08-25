@@ -1,5 +1,5 @@
 import {createCanvas, fillBackground} from 'canvas/utils';
-import {Sphere} from 'graphics/primitives';
+import {Sphere, VoxelEntity, VoxelShape} from 'graphics/primitives';
 import {Renderer, Scene} from 'graphics/render';
 import {colorToHex, hexToColor} from 'graphics/utils';
 import v from 'vec3';
@@ -14,7 +14,7 @@ function requestExport(renderer: Renderer, ctx: CanvasRenderingContext2D) {
 export function start() {
     console.log('Start');
 
-    const {canvas, ctx} = createCanvas(800, 500);
+    const {canvas, ctx} = createCanvas(600, 400);
     if (!ctx) return;
 
     fillBackground(canvas, ctx, '#333');
@@ -25,11 +25,33 @@ export function start() {
     scene.entities.push(new Sphere(v(0, 0, 5), 1));
     scene.entities.push(new Sphere(v(0.6, -0.3, 4.3), 0.6, hexToColor('#f58')));
 
-    scene.entities.push(new Sphere(v(3, 1, 4), 1.0, hexToColor('#f86')));
-    scene.entities.push(new Sphere(v(3, 1, 5), 1.0, hexToColor('#8f6')));
-    scene.entities.push(new Sphere(v(2.5, 1, 6), 1.0, hexToColor('#84f')));
-    scene.entities.push(new Sphere(v(2.2, 1, 7), 1.0, hexToColor('#f8f')));
-    scene.entities.push(new Sphere(v(1.8, 1, 8), 1.0, hexToColor('#ff4')));
+    // scene.entities.push(new Sphere(v(3, 1, 4), 1.0, hexToColor('#f86')));
+    // scene.entities.push(new Sphere(v(3, 1, 5), 1.0, hexToColor('#8f6')));
+    // scene.entities.push(new Sphere(v(2.5, 1, 6), 1.0, hexToColor('#84f')));
+    // scene.entities.push(new Sphere(v(2.2, 1, 7), 1.0, hexToColor('#f8f')));
+    // scene.entities.push(new Sphere(v(1.8, 1, 8), 1.0, hexToColor('#ff4')));
+
+    const voxels = new VoxelEntity(v(0, 0, 2), 10, 0.1);
+    const vShape = voxels.shape as VoxelShape;
+    for (let i = 0; i < 10; i++) {
+        for (let j = 0; j < 10; j++) {
+            if ((i < 4 || i > 6) && (j < 4 || j > 6)) {
+                vShape.setVoxel(i, j, 0, {
+                    r: i * 10 + 140,
+                    g: 40,
+                    b: j * 10 + 140,
+                });
+            } else {
+                vShape.setVoxel(i, j, i, {
+                    r: i * 10 + 140,
+                    g: 40,
+                    b: j * 10 + 140,
+                });
+            }
+        }
+    }
+    scene.entities.push(voxels);
+    console.log('Voxels:', voxels);
 
     requestExport(renderer, ctx);
     renderer.render();

@@ -1,5 +1,5 @@
 import v, {Vec3} from 'vec3';
-import {Color, ShapeType, SphereShape, Transform} from './primitives';
+import {Color, ShapeType, SphereShape, Transform, VoxelEntity, VoxelShape} from './primitives';
 import {applySphereShadow, colorToHex, darkenColor, hexToColor} from './utils';
 
 const RAY_MAX_LENGTH = 10;
@@ -24,23 +24,36 @@ export class Renderer {
     render() {
         const renderChunk = async (index: number, size: number) => {
             const task = new Promise<void>(resolve => {
-                this.buffer.slice(index, index + size).forEach((_, di) => {
-                    const i = index + di;
-                    const x = i % this.width;
-                    const y = Math.floor(i / this.width);
+                setTimeout(() => {
+                    this.buffer.slice(index, index + size).forEach((_, di) => {
+                        const i = index + di;
+                        const x = i % this.width;
+                        const y = Math.floor(i / this.width);
 
-                    const ray = new Ray(this.scene.camera.position);
-                    ray.setDirection(this.scene.camera.direction, this.scene.camera.fov, x, y, this.width, this.height);
-                    //console.log('Trace:', x, y);
-                    this.buffer[i] = ray.trace(this.scene);
-                });
-                resolve();
+                        const ray = new Ray(this.scene.camera.position);
+                        ray.setDirection(
+                            this.scene.camera.direction,
+                            this.scene.camera.fov,
+                            x,
+                            y,
+                            this.width,
+                            this.height,
+                        );
+                        //console.log('Trace:', x, y);
+                        this.buffer[i] = ray.trace(this.scene);
+                    });
+                    resolve();
+                }, 0);
+            });
+
+            this.buffer.slice(index, index + size).forEach((_, i) => {
+                this.buffer[index + i] = {r: 255, g: 200, b: 220};
             });
             await task;
             if (index < this.buffer.length) renderChunk(index + size, size);
         };
 
-        setTimeout(() => renderChunk(0, 10000), 0);
+        setTimeout(() => renderChunk(0, 3000), 0);
     }
 
     exportToCanvas(ctx: CanvasRenderingContext2D) {
@@ -115,14 +128,24 @@ export class Ray {
         this.stepPosition = this.stepPosition.add(this.direction.scaled(stepSize));
 
         entities.forEach(en => {
+            const distToCenter = this.stepPosition.distanceTo(en.position);
             if (en.shape && en.shape.type === ShapeType.sphere) {
-                const distToCenter = this.stepPosition.distanceTo(en.position);
                 if (distToCenter <= (en.shape as SphereShape).radius) {
                     this.alive = false;
                     this.color = en.shape.color;
 
                     // shadow
                     this.color = applySphereShadow(this.color, sunDirection, en.position, this.stepPosition, ambient);
+                }
+            } else if (en.shape && en.shape.type === ShapeType.voxel) {
+                const vShape = en.shape as VoxelShape;
+                const voxels = en as VoxelEntity;
+                if (distToCenter <= (vShape.size / 2) * 1.4) {
+                    const vox = voxels.getClosestVoxel(this.stepPosition);
+                    if (vox) {
+                        this.alive = false;
+                        this.color = vox.color;
+                    }
                 }
             }
         });
